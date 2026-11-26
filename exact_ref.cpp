@@ -25,12 +25,18 @@ struct Record {
 #pragma pack(pop)
 static_assert(sizeof(Record) == 24, "Record debe ocupar 24 bytes");
 
+//std::unordered_map implementa una tabla hash con separate chaining
+//Separate chaining: colisiones se manejan con listas enlazadas
+//su costo en memoria es proporcional al número de ip's distintas de un intervalo
+//a cambio de esta gran memoria, es exacta
 using FreqMap = std::unordered_map<uint32_t, uint64_t>;
 
 static uint64_t calcular_l1(const FreqMap& curr, const FreqMap& prev) {
     uint64_t l1 = 0;
     for (const auto& [ip, c_curr] : curr) {
         auto it = prev.find(ip);
+        //suma el valor ans si la ip estaba en el hash previo
+        //si no, directamente suma las cuentas de la ip
         if (it != prev.end()) {
             uint64_t c_prev = it->second;
             l1 += (c_curr >= c_prev) ? (c_curr - c_prev) : (c_prev - c_curr);
@@ -73,6 +79,8 @@ int main(int argc, char** argv) {
         else if (arg == "--T" && i + 1 < argc) T_sec = std::stod(argv[++i]);
     }
 
+    //mismo proceso de lectura que en cauchy_cli.cpp
+
     if (trace_path.empty()) {
         std::cerr << "Uso: " << argv[0] << " --trace <traza.bin> [--T 10]\n";
         return 1;
@@ -98,6 +106,8 @@ int main(int argc, char** argv) {
     const uint64_t T_us = static_cast<uint64_t>(T_sec * 1e6);
     const uint64_t t0 = trace[0].ts_us;
 
+    //creamos los hashes exactos para el intervalo previo y el actual
+    //de ahí salen nuestras cuentas
     FreqMap prev_map, curr_map;
     uint64_t prev_N = 0, curr_N = 0;
     uint64_t cur_q = 1;

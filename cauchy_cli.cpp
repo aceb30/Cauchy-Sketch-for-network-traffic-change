@@ -64,11 +64,16 @@ int main(int argc, char** argv) {
     // Prueba 1: mediana(|C_ji|) sobre n_samples entradas
     if (mode == "median") {
         std::vector<double> vals(n_samples);
+        //Generamos n_samples entradas a partir de la función entrada del sketch
+        //Esto recorre todo el array, notemos que mueve en j e i
+        //Pasando como parámetro --k 1, podemos comprobar mediana = 1 en una sola fila
+        //Pero si recorremos todo de una, comprobamos en una sola pasada mediana = 1 e independencia de paso
         for (uint64_t idx = 0; idx < n_samples; ++idx) {
             uint64_t j = (idx % k) + 1;
             uint64_t ip_i = idx / k;
             vals[idx] = std::abs(CauchySketch::entrada(sigma, j, ip_i));
         }
+        //Cálculo de la mediana
         std::size_t mid = n_samples / 2;
         std::nth_element(vals.begin(), vals.begin() + mid, vals.end());
         double med = vals[mid];
@@ -84,6 +89,7 @@ int main(int argc, char** argv) {
     if (mode == "determinism") {
         double first = CauchySketch::entrada(sigma, j_row, ip);
         bool all_equal = true;
+        //Repetimos muchas veces la llamada a entrada para confirmar determinismo
         for (uint64_t r = 0; r < n_samples; ++r) {
             if (CauchySketch::entrada(sigma, j_row, ip) != first) {
                 all_equal = false;
@@ -98,9 +104,12 @@ int main(int argc, char** argv) {
 
     // Prueba 3: una sola IP con cuenta c contra sketch vacío
     if (mode == "single-ip") {
+        //Hacemos lo solicitado
+        //Creamos un sketch vacío y uno con una IP
         CauchySketch s_ip(k, sigma);
         CauchySketch s_empty(k, sigma);
         s_ip.actualizar(static_cast<uint32_t>(ip), c_count);
+        //Estimamos L y comprobamos que sea c
         double l_hat = CauchySketch::estimarDistancia(s_ip, s_empty);
         std::cout << "{\"k\": " << k << ", \"sigma\": " << sigma
                   << ", \"c\": " << c_count << ", \"L_hat\": " << l_hat << "}\n";
@@ -108,6 +117,9 @@ int main(int argc, char** argv) {
     }
 
     // Prueba 4: par de intervalos consecutivos (q=1 y q=2) en traza real con caché B
+    //Esto no es la prueba directamente
+    //En validar_sketch.py llamamos a esta función con B = 0 y B normal
+    //Y ahí comparamos el L que entrega esta función
     if (mode == "interval-pair") {
         if (trace_path.empty()) {
             std::cerr << "Error: falta --trace <archivo.bin>\n";
@@ -132,12 +144,16 @@ int main(int argc, char** argv) {
         uint64_t t1 = t0 + T_us;
         uint64_t t2 = t0 + 2 * T_us;
 
+        //Creamos los dos sketches y el caché necesario
+
         CauchySketch s1(k, sigma);
         CauchySketch s2(k, sigma);
         DirectCache cache(B);
 
         uint64_t n1 = 0, n2 = 0;
         bool flushed_s1 = false;
+
+        //Stream! 
 
         for (std::size_t idx = 0; idx < n_packets; ++idx) {
             uint64_t ts = trace[idx].ts_us;
