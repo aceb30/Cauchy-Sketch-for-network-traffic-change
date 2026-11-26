@@ -1,0 +1,32 @@
+# Trazas y datos pesados
+data/
+*.bin
+*.bin.tmp
+*.pcap
+*.pcap.gz
+*.gz
+
+# Resultados generados (se regeneran con ./reproducir.sh)
+resultados/
+
+# Binarios compilados de C++
+pcap2bin
+cauchy_cli
+exact_ref
+test_ref
+test_cache
+*.o
+*.out
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# Editores y sistema operativo
+.vscode/
+.DS_Store
+Thumbs.db
